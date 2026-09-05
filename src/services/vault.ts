@@ -209,3 +209,4 @@ export async function deleteAccount(id: string, token: string | undefined): Prom
   await saveAccounts(remaining, key);
   return true;
 }
+

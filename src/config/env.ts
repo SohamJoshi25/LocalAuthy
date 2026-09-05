@@ -3,6 +3,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  HOST: z.string().default("localhost"),
   PORT: z.coerce.number().int().positive().default(3000),
   VAULT_PATH: z.string().default("src/data/vault.json"),
   VAULT_FILE: z.string().default("src/data/vault.json"),
@@ -10,6 +11,7 @@ const envSchema = z.object({
 
 const resolvedEnv = {
   ...process.env,
+  HOST: process.env.HOST ?? "localhost",
   VAULT_PATH: process.env.VAULT_PATH ?? process.env.VAULT_FILE ?? "src/data/vault.json",
   VAULT_FILE: process.env.VAULT_PATH ?? process.env.VAULT_FILE ?? "src/data/vault.json",
 };

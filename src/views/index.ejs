@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f1115" />
+    <title>Authenticator</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <a class="brand" href="/">
+          <span class="brand-mark">A</span>
+          <span>Authenticator</span>
+        </a>
+
+        <div class="header-actions">
+          <div class="header-status-block">
+            <span id="security-indicator" class="status-pill neutral">Vault locked</span>
+            <span id="vault-modified" class="header-meta-text">No vault created yet</span>
+            <span id="header-account-count" class="header-meta-text">0 accounts</span>
+          </div>
+          <button id="refresh-btn" class="ghost-btn icon-btn" type="button" title="Refresh" aria-label="Refresh">↻</button>
+          <button id="lock-btn" class="ghost-btn hidden" type="button">Lock</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container app">
+      <aside class="sidebar">
+        <section id="vault-access-panel" class="sidebar-section">
+          <div class="section-label">Vault access</div>
+          <div class="vault-access-card">
+            <div class="mode-switcher" aria-label="Choose vault action">
+              <button type="button" class="mode-toggle active" data-vault-mode="unlock">Unlock vault</button>
+              <button type="button" class="mode-toggle" data-vault-mode="create">Create vault</button>
+            </div>
+
+            <div id="unlock-panel" class="vault-form-panel active">
+              <form id="unlock-form" class="form-grid">
+                <div class="field">
+                  <label for="unlock-password">Master password</label>
+                  <input id="unlock-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+                </div>
+                <button class="secondary-btn" type="submit">Unlock</button>
+              </form>
+            </div>
+
+            <div id="create-vault-panel" class="vault-form-panel hidden">
+              <form id="create-vault-form" class="form-grid">
+                <div class="field">
+                  <label for="create-password">Master password</label>
+                  <input id="create-password" name="password" type="password" autocomplete="new-password" placeholder="Create a password" required />
+                </div>
+                <button class="action-btn" type="submit">Create</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="add-account-panel" class="sidebar-section hidden">
+          <details>
+            <summary>Add account</summary>
+            <form id="create-account-form" class="form-grid import-form">
+              <div class="field">
+                <label for="issuer">Issuer</label>
+                <input id="issuer" name="issuer" type="text" placeholder="Google" autocomplete="off" required />
+              </div>
+
+              <div class="field">
+                <label for="account-name">Account</label>
+                <input id="account-name" name="accountName" type="text" placeholder="you@example.com" autocomplete="off" required />
+              </div>
+
+              <div class="field">
+                <label for="secret">Secret</label>
+                <div class="input-with-action">
+                  <input id="secret" name="secret" type="text" placeholder="Base32 secret" autocomplete="off" spellcheck="false" required />
+                  <button id="generate-secret-btn" class="input-action" type="button" title="Generate secret">Generate</button>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="field">
+                  <label for="algorithm">Algorithm</label>
+                  <select id="algorithm">
+                    <option value="sha1">SHA1</option>
+                    <option value="sha256">SHA256</option>
+                    <option value="sha512">SHA512</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="digits">Digits</label>
+                  <select id="digits">
+                    <option value="6">6</option>
+                    <option value="8">8</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="period">Period</label>
+                  <select id="period">
+                    <option value="30">30s</option>
+                    <option value="60">60s</option>
+                  </select>
+                </div>
+              </div>
+
+              <button class="action-btn" type="submit">Add account</button>
+            </form>
+          </details>
+        </section>
+
+        <section id="import-panel" class="sidebar-section hidden">
+          <details>
+            <summary>Import backup</summary>
+            <form id="import-form" class="form-grid import-form" enctype="multipart/form-data">
+              <div class="field">
+                <label for="backup-file">2FAS backup</label>
+                <input id="backup-file" name="file" type="file" accept=".2fas,.json,application/json" required />
+              </div>
+
+              <div class="field">
+                <label for="backup-password">Backup password</label>
+                <input id="backup-password" name="backupPassword" type="password" autocomplete="off" placeholder="Backup password" required />
+              </div>
+
+              <input id="vault-import-password" type="hidden" value="" />
+
+              <button class="secondary-btn" type="submit">Import</button>
+            </form>
+          </details>
+        </section>
+      </aside>
+
+      <section class="main">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">Secure one-time passwords</div>
+            <h1>Your accounts</h1>
+            <p>Generate verification codes from your local vault.</p>
+          </div>
+        </div>
+
+        <section class="accounts-section">
+          <div class="section-header">
+            <div>
+              <h2>Accounts</h2>
+              <span class="section-description">Your verification codes</span>
+            </div>
+          </div>
+
+          <div id="accounts-list" class="account-grid">
+            <div class="empty-state">
+              <div class="empty-icon">+</div>
+              <strong>No accounts yet</strong>
+              <p>Unlock your vault and add your first authenticator.</p>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div id="delete-confirmation" class="confirmation-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="delete-confirmation-title">
+      <div class="confirmation-card">
+        <h3 id="delete-confirmation-title">Delete account?</h3>
+        <p id="delete-confirmation-text">This will permanently remove this account from your vault.</p>
+        <div class="confirmation-actions">
+          <button type="button" id="cancel-delete-btn" class="secondary-btn">Cancel</button>
+          <button type="button" id="confirm-delete-btn" class="danger-btn">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
