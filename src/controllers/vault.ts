@@ -93,10 +93,22 @@ export const importTwoFas: RequestHandler = async (req, res, next) => {
       const imported = [] as Array<{ id: string; issuer: string; accountName: string }>;
 
       for (const entry of entries) {
-        const created = await createAccount(entry, token);
-        imported.push({ id: created.id, issuer: created.issuer, accountName: created.accountName });
-      }
+        try {
+          const created = await createAccount(entry, token);
 
+          imported.push({
+            id: created.id,
+            issuer: created.issuer,
+            accountName: created.accountName,
+          });
+
+        } catch (err) {
+          if (err instanceof AppError && err.statusCode === 409) {
+            continue;
+          }
+          throw err;
+        }
+      }
       res.status(201).json({ data: { imported: imported.length, entries: imported } });
     } finally {
       if (!req.vaultToken) {

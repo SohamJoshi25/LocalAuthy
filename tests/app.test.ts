@@ -528,81 +528,69 @@ describe("Authy vault flow", () => {
 
 
   it(
-    "rejects importing a duplicate 2FAS account",
-    async () => {
-      const { default: app } =
-        await import("../src/app.js");
+  "skips duplicate accounts during 2FAS import",
+  async () => {
+    const { default: app } =
+      await import("../src/app.js");
 
+    await createVault(app);
 
-      await createVault(app);
+    const unlock =
+      await unlockVault(app);
 
-      const unlock =
-        await unlockVault(app);
+    const token =
+      unlock.body.data.token;
 
-      const token =
-        unlock.body.data.token;
+    const firstImport =
+      await request(app)
+        .post("/api/vault/import-2fas")
+        .set(
+          "Authorization",
+          `Bearer ${token}`,
+        )
+        .field(
+          "backupPassword",
+          backupPassword,
+        )
+        .attach(
+          "file",
+          createEncrypted2FasExport(),
+          {
+            filename: "backup.2fas",
+            contentType: "application/json",
+          },
+        );
 
+    expect(firstImport.status).toBe(201);
+    expect(firstImport.body.data.imported).toBe(1);
 
-      const firstImport =
-        await request(app)
-          .post("/api/vault/import-2fas")
-          .set(
-            "Authorization",
-            `Bearer ${token}`,
-          )
-          .field(
-            "backupPassword",
-            backupPassword,
-          )
-          .attach(
-            "file",
-            createEncrypted2FasExport(),
-            {
-              filename: "backup.2fas",
-              contentType:
-                "application/json",
-            },
-          );
+    const duplicateImport =
+      await request(app)
+        .post("/api/vault/import-2fas")
+        .set(
+          "Authorization",
+          `Bearer ${token}`,
+        )
+        .field(
+          "backupPassword",
+          backupPassword,
+        )
+        .attach(
+          "file",
+          createEncrypted2FasExport(),
+          {
+            filename: "backup.2fas",
+            contentType: "application/json",
+          },
+        );
 
+    expect(duplicateImport.status).toBe(201);
 
-      expect(firstImport.status).toBe(201);
-
-      expect(
-        firstImport.body.data.imported,
-      ).toBe(1);
-
-
-      const duplicateImport =
-        await request(app)
-          .post("/api/vault/import-2fas")
-          .set(
-            "Authorization",
-            `Bearer ${token}`,
-          )
-          .field(
-            "backupPassword",
-            backupPassword,
-          )
-          .attach(
-            "file",
-            createEncrypted2FasExport(),
-            {
-              filename: "backup.2fas",
-              contentType:
-                "application/json",
-            },
-          );
-
-
-      /*
-       * Duplicate handling should return
-       * HTTP 409 Conflict.
-       */
-      expect(
-        duplicateImport.status,
-      ).toBe(409);
-    },
-  );
+    expect(
+      duplicateImport.body.data.imported,
+    ).toBe(0);
+  },
+);
 
 
   it(
