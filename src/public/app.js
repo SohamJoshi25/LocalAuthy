@@ -35,6 +35,7 @@ const elements = {
 const toastTimer = { id: null };
 let timerInterval = null;
 let pendingDeleteId = null;
+let sessionRefreshScheduled = false;
 
 function showToast(message, isError = false) {
   const toast = document.getElementById("toast");
@@ -43,6 +44,28 @@ function showToast(message, isError = false) {
   toast.classList.add("show");
   if (toastTimer.id) clearTimeout(toastTimer.id);
   toastTimer.id = setTimeout(() => toast.classList.remove("show"), 2600);
+}
+
+function handleSessionExpired(message) {
+  const text = String(message || "").toLowerCase();
+  const shouldReload = text.includes("session") || text.includes("locked") || text.includes("expired") || text.includes("invalid") || text.includes("unauthorized");
+
+  if (!shouldReload || sessionRefreshScheduled) return false;
+
+  sessionRefreshScheduled = true;
+  setToken("");
+  setUnlockedState(false);
+  if (elements.vaultModified) {
+    elements.vaultModified.textContent = "Session expired or vault is locked";
+  }
+  renderAccounts([]);
+  showToast(message || "Session expired. Refreshing...", true);
+
+  setTimeout(() => {
+    window.location.reload();
+  }, 900);
+
+  return true;
 }
 
 function closeDeleteConfirmation() {
@@ -311,13 +334,17 @@ async function refreshVaultStatus() {
       await refreshAccounts();
     }
   } catch (error) {
+    const message = error?.message || "Session expired or vault is locked";
+    if (handleSessionExpired(message)) {
+      return;
+    }
     setUnlockedState(false);
     setToken("");
     if (elements.vaultModified) {
       elements.vaultModified.textContent = "Session expired or vault is locked";
     }
     renderAccounts([]);
-    showToast(error.message, true);
+    showToast(message, true);
   }
 }
 
@@ -332,7 +359,11 @@ async function refreshAccounts() {
     renderAccounts(Array.isArray(result) ? result : []);
     startCodeTimer();
   } catch (error) {
-    showToast(error.message, true);
+    const message = error?.message || "Unable to refresh accounts";
+    if (handleSessionExpired(message)) {
+      return;
+    }
+    showToast(message, true);
   }
 }
 

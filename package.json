@@ -13,12 +13,14 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "NODE_ENV=production node dist/server.js",
+    "network": "NODE_ENV=production HOST=0.0.0.0 node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest --run",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "verify": "npm run typecheck && npm test && npm run build"
   },
-  "dependencies": {
+"dependencies": {
     "@types/multer": "^2.2.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
