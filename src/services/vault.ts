@@ -156,6 +156,18 @@ export async function listAccounts(token: string | undefined): Promise<Account[]
 export async function findAccount(id: string, token: string | undefined): Promise<Account | undefined> {
   return (await accountsFor(keyFor(token))).find((account) => account.id === id);
 }
+function accountFingerprint(account: Pick<
+  Account,
+  "secret" | "accountName" | "issuer" | "algorithm"
+>): string {
+  return [
+    account.secret.trim().toUpperCase(),
+    account.issuer.trim().toUpperCase(),
+    account.accountName.trim().toUpperCase(),
+    account.algorithm.trim().toUpperCase(),
+  ].join("|");
+}
+
 
 export async function createAccount(
   input: Omit<Account, "id" | "createdAt" | "updatedAt">,
@@ -163,15 +175,23 @@ export async function createAccount(
 ): Promise<Account> {
   const key = keyFor(token);
   const accounts = await accountsFor(key);
-  const now = new Date().toISOString();
+
   const account: Account = {
     ...input,
     id: randomBytes(16).toString("hex"),
-    createdAt: now,
-    updatedAt: now,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
+  const fingerprint = accountFingerprint(account);
+  const duplicate = accounts.some((existing) => accountFingerprint(existing) === fingerprint);
+  if (duplicate) {
+    logger.warn("VAULT", "Duplicate account rejected", { issuer: account.issuer, accountName: account.accountName });
+    throw new AppError(409, "An account with the same issuer, account name, secret, and algorithm already exists");
+  }
+
   await saveAccounts([...accounts, account], key);
+
   return account;
 }
 
@@ -209,4 +229,3 @@ export async function deleteAccount(id: string, token: string | undefined): Prom
   await saveAccounts(remaining, key);
   return true;
 }
-
