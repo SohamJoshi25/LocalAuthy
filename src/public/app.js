@@ -196,15 +196,39 @@ function renderAccounts(accounts) {
       const progress = Math.max(0, Math.min(100, (remaining / period) * 100));
       const code = formatCode(account.code || "-- --");
       const urgent = remaining <= 5;
+      const logoDevToken =
+        document
+          .querySelector('meta[name="logo-dev-publishable-key"]')
+          ?.getAttribute('content') ?? "";
 
       return `
         <article class="account-card" data-id="${escapeHtml(account.id)}" data-urgent="${urgent}">
           <div class="account-top">
-            <div class="account-meta">
-              <p class="account-issuer">${escapeHtml(account.issuer || "Unknown")}</p>
-              <p class="account-name">${escapeHtml(account.accountName || account.account || "No account name")}</p>
+            <div style="display:flex;align-items:center;gap:10px; width:100%">
+              ${logoDevToken ? `
+              <div class="account-brand">
+                <img
+                  loading="lazy"
+                  src="https://img.logo.dev/name/${encodeURIComponent(
+                    (account.issuer || "")
+                      .toLowerCase()
+                      .replace(/[^a-z0-9-\s]/g, "")
+                      .replace(/\s+/g, "-")
+                  )}?token=${encodeURIComponent(logoDevToken)}&theme=dark&format=webp&retina=true"
+                  alt="${escapeHtml(account.issuer || "logo")}"
+                  onerror="this.style.display='none'"
+                />
+              </div>
+            ` : ``}
+
+              <div class="account-meta">
+                <p class="account-issuer">${escapeHtml(account.issuer || "Unknown")}</p>
+                <p class="account-name">${escapeHtml(account.accountName || account.account || "No account name")}</p>
+              </div>
+
+              <button type="button" class="ghost-btn" data-action="delete" data-id="${escapeHtml(account.id)}" title="Delete account">Delete</button>
+
             </div>
-            <button type="button" class="ghost-btn" data-action="delete" data-id="${escapeHtml(account.id)}" title="Delete account">Delete</button>
           </div>
 
           <button type="button" class="account-code" data-action="copy" data-id="${escapeHtml(account.id)}" title="Copy code">${escapeHtml(code)}</button>

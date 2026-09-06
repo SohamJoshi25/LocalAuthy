@@ -499,6 +499,27 @@ button:disabled {
 
 .account-meta {
   min-width: 0;
+  flex: 1;
+}
+
+/* Brand/logo shown next to account title to make cards more aesthetic */
+.account-brand {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
+  display: inline-block;
+}
+
+.account-brand img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
 }
 
 .account-issuer {

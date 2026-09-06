@@ -6,6 +6,7 @@ const envSchema = z.object({
   HOST: z.string().default("localhost"),
   PORT: z.coerce.number().int().positive().default(3000),
   VAULT_FILE: z.string().default("src/data/vault.json"),
+  LOGO_DEV_PUBLISHABLE_KEY: z.string().default("")
 });
 
 const resolvedEnv = {

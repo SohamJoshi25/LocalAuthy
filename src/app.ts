@@ -27,6 +27,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         upgradeInsecureRequests: null,
+        imgSrc: ["'self'","data:", "https://img.logo.dev"],
       },
     },
   }),
