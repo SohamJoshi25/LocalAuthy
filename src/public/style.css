@@ -583,6 +583,10 @@ button:disabled {
   transform: scale(0.98);
 }
 
+.account-card[data-urgent="true"] .account-code-real, .urgent {
+  color: var(--danger) !important;
+}
+
 .account-code-masked {
   opacity: 1;
   transform: scale(1);

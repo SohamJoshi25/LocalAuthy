@@ -432,6 +432,8 @@ function startCodeTimer() {
            if (elements.accountDetailTimerFill) {
              elements.accountDetailTimerFill.style.width = `${percentage}%`;
              elements.accountDetailTimerFill.classList.toggle("urgent", remaining <= 5);
+             elements.accountDetailCode.classList.toggle("urgent", remaining <= 5)
+             elements.accountDetailRemaining.classList.toggle("urgent", remaining <= 5);
            }
          }
        }
