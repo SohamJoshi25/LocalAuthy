@@ -1,187 +1,70 @@
-# Authy — Local TOTP Vault
+# Authy — Your 2FA vault
 
-Authy is a small, self-hosted Express-based TOTP (Time-based One-Time Password) authenticator and vault. It stores TOTP accounts in a locally encrypted vault file and exposes a simple JSON API for creating the vault, unlocking it for a short-lived session, managing TOTP entries, and importing 2FAS exports.
+Authy helps you keep your 2FA codes in one safe, private place.
 
-This repository uses TypeScript and provides development and production build scripts.
+Create a vault, choose a master password, and add your accounts. Then you can open the app, check your current code, and use it when you need it.
 
----
-
-## Features
-
-- Create a locally encrypted vault protected by a master password
-- Unlock the vault to get a short-lived session token for protected routes
-- Add, update, list, delete TOTP accounts (secrets are stored encrypted on disk)
-- Generate new base32 secrets for TOTP
-- Import 2FAS backup exports (decrypt and normalize entries into the vault)
-- Simple HTML UI for local usage (served from the `views`/`public` directories)
-
-Relevant files:
-- Server entry: [src/server.ts](/home/sohamjoshi/Development/Express/Authy/src/server.ts)
-- Express app: [src/app.ts](/home/sohamjoshi/Development/Express/Authy/src/app.ts)
-- API routes: [src/routes/api.ts](/home/sohamjoshi/Development/Express/Authy/src/routes/api.ts)
-- Vault and account logic: [src/services/vault.ts](/home/sohamjoshi/Development/Express/Authy/src/services/vault.ts)
-- Tests: [tests/app.test.ts](/home/sohamjoshi/Development/Express/Authy/tests/app.test.ts)
+You can also import your 2FAS file from Authy so your accounts move over quickly.
 
 ---
 
-## Requirements
+## What you can do
 
-- Node.js 18+ (tested with modern Node versions)
-- npm
-
-Note: The project uses ES modules ("type": "module").
-
----
-
-## Installation
-
-1. Clone the repository and change directory:
-
-   git clone <repo-url> authy
-   cd authy
-
-2. Install dependencies:
-
-   npm install
-
-3. Copy environment variables (optional). You can create a `.env` in the project root to override defaults:
-
-   PORT (default: 3000)
-   HOST (default: localhost)
-   VAULT_FILE (default: src/data/vault.json)
-   NODE_ENV (development | test | production)
-
-Example .env:
-
-   PORT=3000
-   HOST=localhost
-   VAULT_FILE=src/data/vault.json
+- Create a vault with a master password
+- Unlock it when you want to use your codes
+- Add your 2FA accounts
+- View your current code and the next one
+- Import your 2FAS file from Authy
+- Lock the vault when you are done
 
 ---
 
-## Development
+## How to use it
 
-Start the dev server (hot reload via tsx):
+### 1) Install
 
-  npm run dev
+```bash
+npm install
+```
 
-Run the full test suite (includes TypeScript typecheck):
+### 2) Start the app
 
-  npm test
+```bash
+npm run dev
+```
 
-Build for production:
+Then open:
 
-  npm run build
+```text
+http://localhost:3000
+```
 
-Start production server (verifies tests and build first):
+### 3) Create your vault
 
-  npm start
+Pick a strong master password and save it somewhere safe.
 
-Run the server and bind to all interfaces (useful for testing on LAN):
+### 4) Add your accounts
 
-  npm run network
+Add each account with its name and secret key. After that, Authy can generate the code you need.
 
----
+### 5) Import from Authy
 
-## Environment
+If you already have a 2FAS export from Authy, you can import that file into Authy and keep your codes together.
 
-The application reads configuration from environment variables (see [src/config/env.ts](/home/sohamjoshi/Development/Express/Authy/src/config/env.ts)). Defaults are:
+### 6) Lock it when done
 
-- NODE_ENV: development
-- HOST: localhost
-- PORT: 3000
-- VAULT_FILE: src/data/vault.json
-
----
-
-## API Overview
-
-Base URL: /api
-
-A machine-readable API reference is available at `/api/docs` and `/api/routes` (redirects to docs).
-
-Main endpoints (examples):
-
-- GET /api/health
-  - Returns: { status: "ok" }
-
-- POST /api/vault
-  - Create a new encrypted vault
-  - Body: { "password": "<master-password>" }
-  - Example: curl -X POST http://localhost:3000/api/vault -H 'Content-Type: application/json' -d '{"password":"StrongPassword!123"}'
-
-- POST /api/vault/unlock
-  - Unlock vault and receive a token for protected routes
-  - Body: { "password": "<master-password>" }
-  - Response: { data: { token: "<session-token>" } }
-
-- POST /api/vault/import-2fas
-  - Import a 2FAS backup (file upload or JSON payload)
-  - Requires either Authorization: Bearer <token> (if vault unlocked) or provide vaultPassword in body to create/unlock vault for import
-  - Example (JSON payload):
-    curl -X POST http://localhost:3000/api/vault/import-2fas -H 'Content-Type: application/json' -d '{"backupPassword":"backup-secret","vaultPassword":"app-master-password","source":{...}}'
-
-- POST /api/vault/lock
-  - Lock vault (invalidate session token)
-  - Header: Authorization: Bearer <token>
-
-- GET /api/vault/status
-  - Check if vault is unlocked for the session
-  - Header: Authorization: Bearer <token>
-
-- GET /api/totp
-  - List TOTP accounts with current and next codes
-  - Header: Authorization: Bearer <token>
-
-- POST /api/totp
-  - Add a new TOTP entry
-  - Body example: { "issuer":"GitHub","accountName":"demo@example.com","secret":"GEZDGNBVGY3TQOJQ...","algorithm":"sha1","digits":6,"period":30 }
-
-For a full, up-to-date endpoint catalog see [src/routes/api.ts](/home/sohamjoshi/Development/Express/Authy/src/routes/api.ts).
+Lock the vault whenever you are finished using it to keep everything private.
 
 ---
 
-## Security & Storage
+## Keep it safe
 
-- Vault file (default: `src/data/vault.json`) is encrypted with a key derived from the master password using a KDF.
-- Secrets are never stored in plaintext on disk.
-- Unlocking the vault derives the key and keeps it only in memory for the server session; sessions use random tokens.
-- The server writes the vault file with restrictive permissions (0600) and uses atomic replace to avoid corruption.
-
-Security notes:
-- Keep the vault file and your master password secure and backed up.
-- This project is intended as a local/self-hosted authenticator — exposing it publicly requires additional hardening (HTTPS, reverse proxy, access controls, monitoring).
-
----
-
-## Importing 2FAS Backups
-
-Authy supports importing exported 2FAS backups. The import endpoint accepts either a file upload (multipart/form-data) or JSON payload containing the 2FAS backup. A backup password is required to decrypt the 2FAS export. See the import logic in [src/controllers/vault.ts](/home/sohamjoshi/Development/Express/Authy/src/controllers/vault.ts).
-
----
-
-## Tests
-
-Tests are written with Vitest and include a typecheck step. Run them with:
-
-  npm test
-
-Tests and mocks are located in [tests/](/home/sohamjoshi/Development/Express/Authy/tests).
-
----
-
-## Contributing
-
-Contributions are welcome. Please open issues or PRs for bug reports, enhancements, or documentation fixes. Run tests locally and ensure TypeScript typechecks pass before submitting a PR.
-
-Style / commit note: Commits created by automated tools in this repository include a Copilot co-author trailer.
+- Keep your master password private
+- Back up your vault file
+- Only use it on your own device or in a trusted local setup
 
 ---
 
 ## License
 
 MIT — see the LICENSE file.
-
----
-
-If anything in this README should be adjusted (installation steps, example commands, more API examples, or adding screenshots), provide details and an update can be made.
