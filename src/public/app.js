@@ -4,6 +4,8 @@ const state = {
   accounts: [],
 };
 
+const logoDevToken = document.querySelector('meta[name="logo-dev-publishable-key"]')?.getAttribute('content') || "";
+
 const elements = {
   vaultModified: document.getElementById("vault-modified"),
   securityIndicator: document.getElementById("security-indicator"),
@@ -30,7 +32,24 @@ const elements = {
   cancelDeleteBtn: document.getElementById("cancel-delete-btn"),
   confirmDeleteBtn: document.getElementById("confirm-delete-btn"),
   vaultModeButtons: document.querySelectorAll(".mode-toggle"),
+  // account detail dialog elements
+  accountDetailOverlay: document.getElementById("account-detail"),
+  accountDetailCode: document.getElementById("account-detail-code"),
+  accountDetailIssuer: document.getElementById("account-detail-title"),
+  accountDetailName: document.getElementById("account-detail-name"),
+  accountDetailRemaining: document.getElementById("account-detail-remaining"),
+  accountDetailNext: document.getElementById("account-detail-next"),
+  accountDetailAlgo: document.getElementById("account-detail-algo"),
+  accountDetailDigits: document.getElementById("account-detail-digits"),
+  accountDetailPeriod: document.getElementById("account-detail-period"),
+  accountDetailCloseBtn: document.getElementById("detail-close-btn"),
+  accountDetailCopyBtn: document.getElementById("detail-copy-btn"),
+  accountDetailBrand: document.getElementById("account-detail-brand"),
+  accountDetailLogo: document.getElementById("account-detail-logo"),
+  accountDetailTimerFill: document.getElementById("account-detail-timer-fill"),
 };
+
+let currentDialogAccountId = null;
 
 const toastTimer = { id: null };
 let timerInterval = null;
@@ -195,6 +214,9 @@ function renderAccounts(accounts) {
       const period = Number(account.period ?? 30);
       const progress = Math.max(0, Math.min(100, (remaining / period) * 100));
       const code = formatCode(account.code || "-- --");
+      const maskedCode = Number(account.digits) === 8 ? "XXXX XXXX" : "XXX XXX";
+      const nextCode = formatCode(account.nextCode || "-- --");
+      const maskedNextCode = Number(account.digits) === 8 ? "XXXX XXXX" : "XXX XXX";
       const urgent = remaining <= 5;
       const logoDevToken =
         document
@@ -231,11 +253,18 @@ function renderAccounts(accounts) {
             </div>
           </div>
 
-          <button type="button" class="account-code" data-action="copy" data-id="${escapeHtml(account.id)}" title="Copy code">${escapeHtml(code)}</button>
+          <button type="button" class="account-code" data-action="copy" data-id="${escapeHtml(account.id)}" title="Copy code">
+            <span class="account-code-real">${escapeHtml(code)}</span>
+            <span class="account-code-masked">${escapeHtml(maskedCode)}</span>
+          </button>
 
           <div class="account-details">
-            <span>Expires in <strong class="countdown" data-id="${escapeHtml(account.id)}">${remaining}s</strong></span>
-            <span>Next: ${escapeHtml(formatCode(account.nextCode || "-- --"))}</span>
+            <span>Expires in <strong class="countdown" data-id="${escapeHtml(account.id)}">${Math.ceil(remaining)}s</strong></span>
+            <span class="account-next-code">
+              Next: <span class="next-code-parent">
+              <span class="next-code-real">${escapeHtml(nextCode)}</span>
+              <span class="next-code-masked">${escapeHtml(maskedNextCode)}</span></span>
+            </span>
           </div>
 
           <div class="timer" aria-hidden="true">
@@ -287,45 +316,130 @@ function renderAccounts(accounts) {
       }
     });
   });
+
+  // Open account detail dialog when clicking on a card (excluding clicks on controls with data-action)
+  elements.accountsList.addEventListener("click", (event) => {
+    const actionTarget = event.target.closest("[data-action]");
+    if (actionTarget) return; // ignore clicks on buttons/controls
+
+    const card = event.target.closest(".account-card");
+    if (!card) return;
+    const id = card.getAttribute("data-id");
+    if (!id) return;
+    openAccountDialog(id);
+  });
+
+  // Dialog open/close handlers
+  function openAccountDialog(accountId) {
+    const account = state.accounts.find((a) => a.id === accountId);
+    if (!account || !elements.accountDetailOverlay) return;
+
+    elements.accountDetailIssuer.textContent = account.issuer || "Unknown";
+    elements.accountDetailName.textContent = account.accountName || account.account || "No account name";
+    elements.accountDetailCode.textContent = formatCode(account.code || "-- --");
+    elements.accountDetailRemaining.textContent = String(Math.ceil(account.remainingSeconds ?? 0)) + "s";
+    elements.accountDetailNext.textContent = formatCode(account.nextCode || "-- --");
+    elements.accountDetailAlgo.textContent = String(account.algorithm || account.alg || "SHA1");
+    elements.accountDetailDigits.textContent = String(account.digits ?? 6);
+    elements.accountDetailPeriod.textContent = String(account.period ?? 30) + "s";
+
+    // set current dialog account id for live updates
+    currentDialogAccountId = accountId;
+
+    // set brand/logo if available
+    if (logoDevToken && elements.accountDetailLogo) {
+      const slug = encodeURIComponent((account.issuer || "").toLowerCase().replace(/[^a-z0-9-\s]/g, "").replace(/\s+/g, "-"));
+      const src = `https://img.logo.dev/name/${slug}?token=${encodeURIComponent(logoDevToken)}&format=webp&retina=true`;
+      elements.accountDetailLogo.src = src;
+      elements.accountDetailBrand && (elements.accountDetailBrand.style.display = "inline-flex");
+    } else if (elements.accountDetailBrand) {
+      elements.accountDetailBrand.style.display = "none";
+    }
+
+    // update timer fill in dialog
+    if (elements.accountDetailTimerFill) {
+      const period = Number(account.period ?? 30);
+      const remaining = Number(account.remainingSeconds ?? 0);
+      const percentage = Math.max(0, Math.min(100, (remaining / period) * 100));
+      elements.accountDetailTimerFill.style.width = `${percentage}%`;
+      // mark urgent when remaining <= 5s to change color
+      elements.accountDetailTimerFill.classList.toggle("urgent", remaining <= 5);
+    }
+
+    elements.accountDetailOverlay.classList.remove("hidden");
+    elements.accountDetailCloseBtn && elements.accountDetailCloseBtn.focus();
+
+  }
+
+  function closeAccountDialog() {
+    currentDialogAccountId = null;
+    if (elements.accountDetailOverlay) elements.accountDetailOverlay.classList.add("hidden");
+  }
+
+  // Close by clicking overlay (but not the card) and Escape key
+  if (elements.accountDetailOverlay) {
+    elements.accountDetailOverlay.addEventListener("click", (ev) => {
+      if (ev.target === elements.accountDetailOverlay) closeAccountDialog();
+    });
+  }
+
+  elements.accountDetailCloseBtn && elements.accountDetailCloseBtn.addEventListener("click", closeAccountDialog);
+
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && elements.accountDetailOverlay && !elements.accountDetailOverlay.classList.contains("hidden")) {
+      closeAccountDialog();
+    }
+  });
 }
 
 function startCodeTimer() {
+  const deltaTime = 0.1;
   if (timerInterval) clearInterval(timerInterval);
-
   timerInterval = setInterval(() => {
     if (!state.unlocked || !state.accounts.length) return;
 
     let shouldRefresh = false;
 
     state.accounts.forEach((account) => {
-      const countdown = document.querySelector(`.countdown[data-id="${account.id}"]`);
-      const timerBar = document.querySelector(`[data-timer-id="${account.id}"]`);
+       const countdown = document.querySelector(`.countdown[data-id="${account.id}"]`);
+       const timerBar = document.querySelector(`[data-timer-id="${account.id}"]`);
+       
 
-      if (!countdown || !timerBar) return;
+       if (countdown && timerBar) {
+         let remaining = Number(account.remainingSeconds ?? 0);
+         remaining = Math.max(0, remaining - deltaTime);
+         account.remainingSeconds = remaining;
 
-      let remaining = Number(account.remainingSeconds ?? 0);
-      remaining = Math.max(0, remaining - 1);
-      account.remainingSeconds = remaining;
+         countdown.textContent = `${Math.ceil(remaining)}s`;
 
-      countdown.textContent = `${remaining}s`;
+         const period = Number(account.period ?? 30);
+         const percentage = Math.max(0, Math.min(100, (remaining / period) * 100));
+         timerBar.style.width = `${percentage}%`;
 
-      const period = Number(account.period ?? 30);
-      const percentage = Math.max(0, Math.min(100, (remaining / period) * 100));
-      timerBar.style.width = `${percentage}%`;
+         const urgent = remaining <= 5;
+         const card = timerBar.closest(".account-card");
+         if (card) {
+           card.dataset.urgent = String(urgent);
+         }
 
-      const urgent = remaining <= 5;
-      const card = timerBar.closest(".account-card");
-      if (card) {
-        card.dataset.urgent = String(urgent);
-      }
+         if (remaining <= 0) shouldRefresh = true;
 
-      if (remaining <= 0) shouldRefresh = true;
+         // if the dialog is open for this account, update its UI too
+         if (currentDialogAccountId === account.id && elements.accountDetailOverlay && !elements.accountDetailOverlay.classList.contains("hidden")) {
+           if (elements.accountDetailCode) elements.accountDetailCode.textContent = formatCode(account.code || "-- --");
+           if (elements.accountDetailRemaining) elements.accountDetailRemaining.textContent = `${Math.ceil(remaining)}s`;
+           if (elements.accountDetailTimerFill) {
+             elements.accountDetailTimerFill.style.width = `${percentage}%`;
+             elements.accountDetailTimerFill.classList.toggle("urgent", remaining <= 5);
+           }
+         }
+       }
     });
 
     if (shouldRefresh) {
       refreshAccounts();
     }
-  }, 1000);
+  }, deltaTime*1000);
 }
 
 async function refreshVaultStatus() {
@@ -390,6 +504,23 @@ async function refreshAccounts() {
     showToast(message, true);
   }
 }
+
+
+// Dialog copy button: stable handler that reads the currently-open account
+if (elements.accountDetailCopyBtn) {
+  elements.accountDetailCopyBtn.addEventListener("click", async () => {
+    if (!currentDialogAccountId) return showToast("No account open", true);
+    const account = state.accounts.find((a) => a.id === currentDialogAccountId);
+    if (!account || !account.code) return showToast("No code to copy", true);
+    try {
+      await navigator.clipboard.writeText(account.code);
+      showToast("Code copied");
+    } catch (err) {
+      showToast("Copy failed", true);
+    }
+  });
+}
+
 
 async function handleCreateVault(event) {
   event.preventDefault();
@@ -547,6 +678,40 @@ elements.deleteModal.addEventListener("click", (event) => {
 elements.vaultModeButtons.forEach((button) => {
   button.addEventListener("click", () => setVaultMode(button.dataset.vaultMode || "unlock"));
 });
+
+// Copy button for account detail — use Clipboard API with execCommand fallback
+if (elements.accountDetailCopyBtn) {
+  elements.accountDetailCopyBtn.addEventListener("click", async () => {
+    if (!currentDialogAccountId) return showToast("No account open", true);
+    const account = state.accounts.find((a) => a.id === currentDialogAccountId);
+    if (!account || !account.code) return showToast("No code to copy", true);
+
+    const valueToCopy = account.code;
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(valueToCopy);
+      } else {
+        // Fallback: use a temporary textarea and execCommand
+        const ta = document.createElement("textarea");
+        ta.value = valueToCopy;
+        // avoid scrolling to bottom
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (!ok) throw new Error("execCommand failed");
+      }
+      showToast("Code copied");
+    } catch (err) {
+      console.error("Copy error:", err);
+      showToast("Copy failed", true);
+    }
+  });
+}
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !elements.deleteModal.classList.contains("hidden")) {

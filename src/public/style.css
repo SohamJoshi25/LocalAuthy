@@ -51,7 +51,7 @@ button:disabled {
 }
 
 .container {
-  width: min(1420px, calc(100% - 40px));
+  width: calc(100% - 40px);
   margin-inline: auto;
 }
 
@@ -181,7 +181,7 @@ button:disabled {
 }
 
 .status-pill.neutral {
-  background: #242830;
+  background: #34211e;
   color: var(--muted);
 }
 
@@ -545,6 +545,7 @@ button:disabled {
   line-height: 1.2;
 }
 .account-code {
+  position: relative;
   width: 100%;
   min-height: 68px;
   display: flex;
@@ -558,7 +559,7 @@ button:disabled {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 27px;
   font-weight: 700;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.1em;
   text-align: center;
   line-height: 1;
   user-select: all;
@@ -567,7 +568,49 @@ button:disabled {
   transition: border-color 120ms ease, background 120ms ease;
 }
 
-.account-code:hover {
+.account-code-real,
+.account-code-masked {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.account-code-real {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.account-code-masked {
+  opacity: 1;
+  transform: scale(1);
+  letter-spacing: 0.08em;
+}
+
+.account-card:hover .account-code-real,
+.account-card:focus-within .account-code-real,
+.account-code:hover .account-code-real,
+.account-code:focus .account-code-real,
+.account-code:hover .account-code-masked,
+.account-code:focus .account-code-masked {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.account-card:hover .account-code-masked,
+.account-card:focus-within .account-code-masked,
+.account-code:hover .account-code-masked,
+.account-code:focus .account-code-masked {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.account-card:hover .account-code,
+.account-card:focus-within .account-code,
+.account-code:hover,
+.account-code:focus {
   border-color: var(--border-hover);
   background: #14171d;
 }
@@ -585,6 +628,60 @@ button:disabled {
 .account-details strong {
   color: var(--text);
   font-weight: 600;
+}
+
+.account-next-code {
+  position: relative;
+  display: inline-block;
+  min-height: 1.2em;
+  min-width: 90px;
+}
+
+.next-code-real,
+.next-code-masked {
+  display: inline-block;
+  inset: 0 auto auto 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  transition: opacity 150ms ease, transform 150ms ease;
+  white-space: nowrap;
+}
+
+.next-code-parent{
+  position: relative;
+  display: inline-block;
+}
+
+
+.next-code-real {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.next-code-masked {
+  opacity: 1;
+  transform: scale(1);
+  letter-spacing: 0.08em;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.account-card:hover .next-code-real,
+.account-card:focus-within .next-code-real,
+.account-next-code:hover .next-code-real,
+.account-next-code:focus-within .next-code-real {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.account-card:hover .next-code-masked,
+.account-card:focus-within .next-code-masked,
+.account-next-code:hover .next-code-masked,
+.account-next-code:focus-within .next-code-masked {
+  opacity: 0;
+  transform: scale(0.98);
 }
 
 .empty-state {
@@ -660,8 +757,8 @@ details[open] summary::before {
   height: 100%;
   background: linear-gradient(90deg, rgba(122, 162, 255, 0.85), rgba(122, 162, 255, 1));
   border-radius: inherit;
-  transition: width 1200ms ease-in-out, background 200ms ease;
-  box-shadow: 0 0 12px rgba(122, 162, 255, 0.25);
+  transition: width 100ms linear, background 200ms ease;
+  box-shadow: 0 0 12px rgba(4, 4, 4, 0.25);
 }
 
 .account-card[data-urgent="true"] .countdown {
@@ -669,7 +766,13 @@ details[open] summary::before {
 }
 
 .account-card[data-urgent="true"] .timer-fill {
-  background: linear-gradient(90deg, #7aa2ff 0%, #ef737b 100%);
+  background: #ef737b;
+  box-shadow: 0 0 12px rgba(239, 115, 123, 0.2);
+}
+
+/* Dialog timer urgent state matches account card urgent styling */
+.detail-timer-fill.urgent {
+  background: #ef737b;
   box-shadow: 0 0 12px rgba(239, 115, 123, 0.2);
 }
 
@@ -684,7 +787,7 @@ details[open] summary::before {
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.5;
   opacity: 0;
@@ -769,7 +872,121 @@ details[open] summary::before {
   }
 }
 
+.detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 9, 12, 0.45);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  padding: 20px;
+}
+
+.detail-overlay.hidden {
+  display: none;
+}
+
+.detail-card {
+  min-width: min(430px,100%);
+  padding: 18px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(23, 26, 32, 0.9), rgba(17, 19, 24, 0.86));
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 18px 48px rgba(0,0,0,0.6);
+}
+
+.detail-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.detail-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.detail-header .detail-account-name {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.detail-body {
+  display: grid;
+  gap: 12px;
+}
+
+.detail-brand {
+  width: 56px;
+  height: 56px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-brand-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.detail-code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 54px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-align: center;
+  padding: 18px 14px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.45) inset;
+}
+
+.detail-timer {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.03);
+  overflow: hidden;
+}
+
+.detail-timer-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(122, 162, 255, 0.9), rgba(122, 162, 255, 1));
+  transition: width 100ms linear, background 200ms ease;
+  box-shadow: 0 0 18px rgba(122, 162, 255, 0.2);
+}
+
+.detail-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .detail-meta {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 520px) {
+
   .container {
     width: calc(100% - 20px);
   }

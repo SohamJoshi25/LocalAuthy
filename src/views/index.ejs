@@ -178,6 +178,44 @@
       </div>
     </div>
 
+    <!-- Account detail dialog (opened when clicking an account card) -->
+    <div id="account-detail" class="detail-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="account-detail-title">
+      <div class="detail-card">
+        <header class="detail-header">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="detail-brand" id="account-detail-brand" aria-hidden="true">
+              <img id="account-detail-logo" class="detail-brand-img" alt="" />
+            </div>
+
+            <div>
+              <h3 id="account-detail-title" class="detail-issuer">Issuer</h3>
+              <div class="detail-account-name muted" id="account-detail-name">account@example.com</div>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button id="detail-copy-btn" class="secondary-btn">Copy code</button>
+            <button id="detail-close-btn" class="ghost-btn" aria-label="Close">✕</button>
+          </div>
+        </header>
+
+        <main class="detail-body">
+          <div class="detail-code" id="account-detail-code">-- --</div>
+
+          <div class="detail-timer" aria-hidden="true">
+            <div class="detail-timer-fill" id="account-detail-timer-fill" style="width:0%"></div>
+          </div>
+
+          <div class="detail-meta">
+            <div>Expires in <strong id="account-detail-remaining">0s</strong></div>
+            <div>Next: <span id="account-detail-next">-- --</span></div>
+            <div>Algo: <span id="account-detail-algo">SHA1</span></div>
+            <div>Digits: <span id="account-detail-digits">6</span></div>
+            <div>Period: <span id="account-detail-period">30s</span></div>
+          </div>
+        </main>
+      </div>
+    </div>
+
     <script src="/app.js"></script>
   </body>
 </html>
