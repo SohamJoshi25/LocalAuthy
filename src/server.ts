@@ -7,8 +7,8 @@ import app from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./utils/logger.js";
 
-const key = fs.readFileSync("cert/key.pem");
-const cert = fs.readFileSync("cert/cert.pem");
+const key = fs.readFileSync(env.KEY_PATH);
+const cert = fs.readFileSync(env.CERT_PATH);
 
 const server = https.createServer({key, cert},app);
 

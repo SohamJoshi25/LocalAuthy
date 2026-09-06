@@ -1,3 +1,5 @@
+import { env } from "../config/env.js";
+
 type LogLevel = "INFO" | "WARN" | "ERROR" | "SUCCESS";
 
 const colors = {
@@ -30,6 +32,12 @@ function formatMessage(level: LogLevel, scope: string, message: string, meta?: u
 }
 
 function log(level: LogLevel, scope: string, message: string, meta?: unknown): void {
+  if(env.LOG_LEVEL.split(",").length != 0){
+    if(!env.LOG_LEVEL.split(",").map(l => l.toUpperCase().includes(level))){
+      return;
+    }
+  }
+  
   const output = formatMessage(level, scope, message, meta);
   if (level === "ERROR") {
     console.error(output);
