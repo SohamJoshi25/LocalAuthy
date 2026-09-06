@@ -6,3 +6,4 @@ coverage/
 dist/
 cert/
 src/data/vault.json
+bin/
