@@ -33,10 +33,12 @@ function formatMessage(level: LogLevel, scope: string, message: string, meta?: u
 }
 
 function log(level: LogLevel, scope: string, message: string, meta?: unknown): void {
-  if(env.LOG_LEVEL.split(",").length != 0  || level === "SYSTEM"){
-    if(!env.LOG_LEVEL.split(",").map(l => l.toUpperCase().includes(level))){
-      return;
-    }
+  if (level !== "SYSTEM" && !env.LOG_LEVEL
+      .split(",")
+      .map((l) => l.trim().toUpperCase())
+      .some((l) => l === level)
+  ){
+    return;
   }
 
   const output = formatMessage(level, scope, message, meta);

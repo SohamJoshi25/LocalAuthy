@@ -17,6 +17,7 @@ server.listen(env.PORT, env.HOST, () => {
     host: env.HOST,
     port: env.PORT,
     environment: env.NODE_ENV,
+    log_level: env.LOG_LEVEL
   });
 
   const interfaces = os.networkInterfaces();
