@@ -18,8 +18,8 @@
   "test:coverage": "npm run typecheck && vitest --coverage",
   "build": "npm run clean && tsc",
   "verify": "npm run test && npm run build",
-  "start": "npm run verify && NODE_ENV=production node dist/server.js",
-  "network": "npm run verify && NODE_ENV=production HOST=0.0.0.0 node dist/server.js"
+  "start": "npm run verify && NODE_ENV=production LOG_LEVEL=ERROR node dist/server.js",
+  "network": "npm run verify && NODE_ENV=production LOG_LEVEL=ERROR HOST=0.0.0.0 node dist/server.js"
 },
 "dependencies": {
     "@types/multer": "^2.2.0",

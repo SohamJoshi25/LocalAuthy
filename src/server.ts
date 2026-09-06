@@ -13,7 +13,7 @@ const cert = fs.readFileSync(env.CERT_PATH);
 const server = https.createServer({key, cert},app);
 
 server.listen(env.PORT, env.HOST, () => {
-  logger.success("SERVER", "Authy service started", {
+  logger.system("SERVER", "Authy service started", {
     host: env.HOST,
     port: env.PORT,
     environment: env.NODE_ENV,
@@ -30,7 +30,7 @@ server.listen(env.PORT, env.HOST, () => {
 
       for (const address of addresses) {
         if (address.family === "IPv4" && !address.internal) {
-          logger.info(
+          logger.system(
             "SERVER",
             `Available at https://${address.address}:${env.PORT}`,
           );

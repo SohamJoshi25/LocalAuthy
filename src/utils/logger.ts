@@ -1,6 +1,6 @@
 import { env } from "../config/env.js";
 
-type LogLevel = "INFO" | "WARN" | "ERROR" | "SUCCESS";
+type LogLevel = "INFO" | "WARN" | "ERROR" | "SUCCESS" | "SYSTEM";
 
 const colors = {
   reset: "\u001b[0m",
@@ -18,6 +18,7 @@ const levelColors: Record<LogLevel, string> = {
   WARN: colors.yellow,
   ERROR: colors.red,
   SUCCESS: colors.green,
+  SYSTEM: colors.blue
 };
 
 function formatMessage(level: LogLevel, scope: string, message: string, meta?: unknown): string {
@@ -32,12 +33,12 @@ function formatMessage(level: LogLevel, scope: string, message: string, meta?: u
 }
 
 function log(level: LogLevel, scope: string, message: string, meta?: unknown): void {
-  if(env.LOG_LEVEL.split(",").length != 0){
+  if(env.LOG_LEVEL.split(",").length != 0  || level === "SYSTEM"){
     if(!env.LOG_LEVEL.split(",").map(l => l.toUpperCase().includes(level))){
       return;
     }
   }
-  
+
   const output = formatMessage(level, scope, message, meta);
   if (level === "ERROR") {
     console.error(output);
@@ -51,4 +52,5 @@ export const logger = {
   warn: (scope: string, message: string, meta?: unknown) => log("WARN", scope, message, meta),
   error: (scope: string, message: string, meta?: unknown) => log("ERROR", scope, message, meta),
   success: (scope: string, message: string, meta?: unknown) => log("SUCCESS", scope, message, meta),
+  system: (scope: string, message: string, meta?: unknown) => log("SYSTEM", scope, message, meta),
 };
