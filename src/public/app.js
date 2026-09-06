@@ -427,6 +427,7 @@ function startCodeTimer() {
          // if the dialog is open for this account, update its UI too
          if (currentDialogAccountId === account.id && elements.accountDetailOverlay && !elements.accountDetailOverlay.classList.contains("hidden")) {
            if (elements.accountDetailCode) elements.accountDetailCode.textContent = formatCode(account.code || "-- --");
+           if (elements.accountDetailNext) elements.accountDetailNext.textContent = formatCode(account.nextCode || "-- --");
            if (elements.accountDetailRemaining) elements.accountDetailRemaining.textContent = `${Math.ceil(remaining)}s`;
            if (elements.accountDetailTimerFill) {
              elements.accountDetailTimerFill.style.width = `${percentage}%`;
