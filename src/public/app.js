@@ -236,7 +236,7 @@ function renderAccounts(accounts) {
                       .toLowerCase()
                       .replace(/[^a-z0-9-\s]/g, "")
                       .replace(/\s+/g, "-")
-                  )}?token=${encodeURIComponent(logoDevToken)}&theme=dark&format=webp&retina=true"
+                  )}?token=${encodeURIComponent(logoDevToken)}&format=webp&retina=true"
                   alt="${escapeHtml(account.issuer || "logo")}"
                   onerror="this.style.display='none'"
                 />
